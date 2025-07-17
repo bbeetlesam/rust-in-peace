@@ -15,11 +15,11 @@ local Act = {
 }
 
 function Act:load(name)
-    if name == nil then return end
+    local success, act_or_error = pcall(require, "src.acts." .. name)
+    assert(success, "act '" .. tostring(name) .. "' is not found, fool.\n\nOriginal error:\n" .. tostring(act_or_error))
 
-    local act = require("src.acts." .. name)
     self.id = name
-    self.current = act
+    self.current = act_or_error
     if self.current.load then
         self.current:load()
     end
