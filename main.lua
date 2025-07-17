@@ -1,7 +1,9 @@
 local Acts = require("src.acts")
 local states = require("src.states")
+local shaders = require("src.shaders")
 
 function love.load()
+    shaders.load()
     Acts:load("beginning")
 end
 
