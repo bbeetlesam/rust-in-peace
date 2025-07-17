@@ -1,4 +1,32 @@
+local utils = require("src.utils")
 local Player = {}
+
+-- Eyes funcs
+function Player:setEyes()
+    self.eyesOffsetX = 0
+    self.eyesOffsetY = 0
+    self.eyesOffsetStrength = 3.5
+    self.eyesEasing = 0.2
+end
+
+function Player:updateEyes()
+    local targetEyesX = (self.dx or 0) * self.eyesOffsetStrength
+    local targetEyesY = (self.dy or 0) * self.eyesOffsetStrength
+    self.eyesOffsetX = self.eyesOffsetX + (targetEyesX - self.eyesOffsetX) * self.eyesEasing
+    self.eyesOffsetY = self.eyesOffsetY + (targetEyesY - self.eyesOffsetY) * self.eyesEasing
+end
+
+-- Hand funcs
+function Player:setHands()
+    self.handRot = 0
+    self.handRotStrength = 0.4
+    self.handRotEasing = 0.1
+end
+
+function Player:updateHands()
+    local targetRot = (self.dx or 0) * self.handRotStrength
+    self.handRot = self.handRot + (targetRot - self.handRot) * self.handRotEasing
+end
 
 function Player:load(x, y, speed, playable)
     self.x = x or 0
@@ -8,12 +36,32 @@ function Player:load(x, y, speed, playable)
 
     -- hitbox
     self.width = 50
-    self.height = 50
+    self.height = 55
 
+    -- init boundary
     self.boundary = nil
+
+    -- player's visual components
+    self.head = love.graphics.newImage("assets/img/head.png")
+    self.eyes = love.graphics.newImage("assets/img/eyes.png")
+    self.eyelash = love.graphics.newImage("assets/img/eyelash.png")
+    self.hands = love.graphics.newImage("assets/img/hand.png")
+
+    self.wheel = {}
+    self.wheelAtlas = love.graphics.newImage("assets/img/wheel.png")
+    for i = 0, 3 do
+        self.wheel[i + 1] = love.graphics.newQuad(i * 60, 0, 60, 60, self.wheelAtlas:getDimensions())
+    end
+    self.wheelId = 1
+    self.wheelDir = 1
+
+    self:setEyes()
+    self:setHands()
+    self.frame = 0
 end
 
 function Player:update(dt)
+    self.frame = self.frame + 1
     self.dx, self.dy = 0, 0
     local left, right, up, down
 
@@ -54,13 +102,49 @@ function Player:update(dt)
     -- update final position
     self.x = nextX
     self.y = nextY
+
+    -- update components
+    self:updateEyes()
+    self:updateHands()
+
+    -- wheel sprites
+    if self.frame % 3 == 0 and (self.dx ~= 0 or self.dy ~= 0) then
+        self.wheelId = self.wheelId + 1
+        if self.wheelId > 4 then
+            self.wheelId = 1
+        end
+    end
+    if self.dx ~= 0 then self.wheelDir = utils.round(self.dx) end
 end
 
 function Player:draw()
+    local y = self.y - 7
     love.graphics.setColor(1, 1, 1)
-
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.rectangle("fill", self.x - 25, self.y - 25, 50, 50)
+    -- wheel leg
+    love.graphics.draw(self.wheelAtlas, self.wheel[self.wheelId], self.x + 0.5, y + 20, 0, 0.8*self.wheelDir, 1, 30, 0)
+    -- right hand
+    love.graphics.draw(self.hands, self.x - 14, y + 3, self.handRot, -1, 1, 0, self.hands:getHeight()/2)
+    love.graphics.draw(self.hands, self.x + 14, y + 3, self.handRot, 1, 1, 0, self.hands:getHeight()/2)
+    -- head
+    love.graphics.draw(self.head, self.x, y, 0, 0.7, 0.8, self.head:getWidth()/2, self.head:getHeight()/2)
+    -- battery indicator circle
+    love.graphics.setColor(0, 1, 0)
+    love.graphics.rectangle("fill", self.x - 2, y - 18, 4, 2)
+    love.graphics.setColor(1, 1, 1)
+    -- eyes
+    love.graphics.draw(self.eyes, self.x - 1 + self.eyesOffsetX, y - 4 + self.eyesOffsetY, 0, 0.8, 0.9,
+        self.eyes:getWidth()/2,
+        self.eyes:getHeight()/2
+    )
+    -- eyelashes
+    love.graphics.draw(self.eyelash, self.x - 1 + self.eyesOffsetX - 6, y - 11 + self.eyesOffsetY, 0, 0.8, 1,
+        self.eyelash:getWidth()/2,
+        self.eyelash:getHeight()/2
+    )
+    love.graphics.draw(self.eyelash, self.x - 1 + self.eyesOffsetX + 7, y - 11 + self.eyesOffsetY, 0, 0.8, 1,
+        self.eyelash:getWidth()/2,
+        self.eyelash:getHeight()/2
+    )
 end
 
 function Player:getPosition()

@@ -26,4 +26,12 @@ function utils.hexToRGB(hex)
     return (r or 0)/255, (g or 0)/255, (b or 0)/255, (a or 255)/255
 end
 
+function utils.round(n)
+    if n >= 0 then
+        return math.floor(n + 0.5)
+    else
+        return math.ceil(n - 0.5)
+    end
+end
+
 return utils
