@@ -37,7 +37,7 @@ function Player:load(x, y, speed, playable)
     self.playable = (playable ~= nil) and playable or false
 
     -- hitbox
-    self.width = 40
+    self.width = 38
     self.height = 55
 
     -- init boundary
@@ -132,8 +132,11 @@ function Player:update(dt)
 
     -- sounds
     if self.dx ~= 0 or self.dy ~= 0 then
-        sounds.rollingSolid:play()
-        sounds.rollingSolid:setVolume(0.3)
+        if not sounds.rollingSolid:isPlaying() then
+            sounds.rollingSolid:setLooping(true)
+            sounds.rollingSolid:play()
+            sounds.rollingSolid:setVolume(0.3)
+        end
     else
         sounds.rollingSolid:stop()
     end
@@ -245,6 +248,7 @@ end
 -- for debugging
 function Player:drawBoundary()
     if self.boundary then
+        love.graphics.setLineWidth(1)
         love.graphics.setColor(1, 0, 0)
         love.graphics.rectangle("line", self.boundary.x, self.boundary.y, self.boundary.w, self.boundary.h)
         love.graphics.setColor(1, 1, 1)
@@ -253,6 +257,7 @@ end
 
 -- for debugging
 function Player:drawHitbox()
+    love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 0, 0)
     love.graphics.rectangle("line", self.x - self.width/2, self.y - self.height/2, self.width, self.height)
     love.graphics.setColor(1, 1, 1)
@@ -260,6 +265,7 @@ end
 
 -- for debugging
 function Player:drawWalls()
+    love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 0, 0, 0.5)
     for _, wall in ipairs(self.walls) do
         love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
