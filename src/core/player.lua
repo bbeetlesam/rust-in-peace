@@ -1,4 +1,6 @@
 local utils = require("src.utils")
+local sounds = require("src.sounds")
+
 local Player = {}
 
 -- Eyes funcs
@@ -35,7 +37,7 @@ function Player:load(x, y, speed, playable)
     self.playable = (playable ~= nil) and playable or false
 
     -- hitbox
-    self.width = 50
+    self.width = 40
     self.height = 55
 
     -- init boundary
@@ -58,6 +60,9 @@ function Player:load(x, y, speed, playable)
     self:setEyes()
     self:setHands()
     self.frame = 0
+
+    -- Walls
+    self.walls = {}
 end
 
 function Player:update(dt)
@@ -89,6 +94,15 @@ function Player:update(dt)
     local nextX = self.x + self.dx * self.speed * dt
     local nextY = self.y + self.dy * self.speed * dt
 
+    -- check walls on x axis
+    for _, wall in ipairs(self.walls) do
+        nextX = self:collideAxis(nextX, self.y, wall, "x")
+    end
+    -- check for y axis then
+    for _, wall in ipairs(self.walls) do
+        nextY = self:collideAxis(nextX, nextY, wall, "y")
+    end
+
     -- clamp to boundary if set
     if self.boundary then
         local minX = self.boundary.x + self.width / 2
@@ -115,6 +129,14 @@ function Player:update(dt)
         end
     end
     if self.dx ~= 0 then self.wheelDir = utils.round(self.dx) end
+
+    -- sounds
+    if self.dx ~= 0 or self.dy ~= 0 then
+        sounds.rollingSolid:play()
+        sounds.rollingSolid:setVolume(0.3)
+    else
+        sounds.rollingSolid:stop()
+    end
 end
 
 function Player:draw()
@@ -172,6 +194,54 @@ function Player:removeBoundary()
     self.boundary = nil
 end
 
+function Player:addWall(x, y, w, h)
+    table.insert(self.walls, {x = x, y = y, w = w, h = h})
+end
+
+function Player:removeWall(index)
+    if self.walls[index] then
+        table.remove(self.walls, index)
+    end
+end
+
+function Player:collideAxis(nextX, nextY, wall, axis)
+    local hw = self.width / 2
+    local hh = self.height / 2
+
+    local px = nextX
+    local py = nextY
+
+    local left   = px - hw
+    local right  = px + hw
+    local top    = py - hh
+    local bottom = py + hh
+
+    local wleft   = wall.x
+    local wright  = wall.x + wall.w
+    local wtop    = wall.y
+    local wbottom = wall.y + wall.h
+
+    local overlapX = right > wleft and left < wright
+    local overlapY = bottom > wtop and top < wbottom
+
+    if overlapX and overlapY then
+        if axis == "x" then
+            if self.x < wleft then
+                return wleft - hw
+            else
+                return wright + hw
+            end
+        elseif axis == "y" then
+            if self.y < wtop then
+                return wtop - hh
+            else
+                return wbottom + hh
+            end
+        end
+    end
+    return axis == "x" and nextX or nextY
+end
+
 -- for debugging
 function Player:drawBoundary()
     if self.boundary then
@@ -187,5 +257,16 @@ function Player:drawHitbox()
     love.graphics.rectangle("line", self.x - self.width/2, self.y - self.height/2, self.width, self.height)
     love.graphics.setColor(1, 1, 1)
 end
+
+-- for debugging
+function Player:drawWalls()
+    love.graphics.setColor(1, 0, 0, 0.5)
+    for _, wall in ipairs(self.walls) do
+        love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
+    end
+    love.graphics.setColor(1, 1, 1)
+end
+
+
 
 return Player
