@@ -38,7 +38,7 @@ function Player:load(x, y, speed, playable)
 
     -- hitbox
     self.width = 38
-    self.height = 55
+    self.height = 50
 
     -- init boundary
     self.boundary = nil
@@ -170,6 +170,9 @@ function Player:draw()
         self.eyelash:getWidth()/2,
         self.eyelash:getHeight()/2
     )
+
+    -- draw walls
+    self:drawWalls()
 end
 
 function Player:getPosition()
@@ -263,10 +266,8 @@ function Player:drawHitbox()
     love.graphics.setColor(1, 1, 1)
 end
 
--- for debugging
 function Player:drawWalls()
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 0, 0, 0.5)
+    love.graphics.setColor(0, 0, 0, 1)
     for _, wall in ipairs(self.walls) do
         love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
     end
