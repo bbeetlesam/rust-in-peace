@@ -34,4 +34,27 @@ function utils.round(n)
     end
 end
 
+function utils.isValueAround(val, min, max)
+    return val >= min and val <= max
+end
+
+-- execute once by giving a unique key for each func
+utils.executedKeys = {}
+function utils.executeOnce(key, func)
+    if not utils.executedKeys[key] then
+        utils.executedKeys[key] = true -- store the key id
+        func()
+    end
+end
+
+function utils.lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+-- calculates the linear parameter t that produces a value within the range [a, b].
+function utils.inverseLerp(a, b, value)
+    if a == b then return 0 end
+    return (value - a) / (b - a)
+end
+
 return utils
